@@ -1,9 +1,9 @@
 name: CI-CD-Pipeline-to-AWS-ElasticBeastalk  # В будущем этот скрипт можно поменятьна любой application и использовать для deploy любого application.
 env:  #Назначаем глобальные переменные которые нам понадобяться
-#  EB_PACKAGE_S3_BUCKET_NAME : "vasya-flask-application-packages" # Это имя S3 Bucket где будут храниться все наши пакеты 
+  EB_PACKAGE_S3_BUCKET_NAME : "vasya-flask-application-packages" # Это имя S3 Bucket где будут храниться все наши пакеты 
   EB_APPLICATION_NAME       : "MyFlask"      # Это имя Elastic Beanstack которыймы сделали
   EB_EVIRONMENT_NAME        : "Myflask-env"  # Это имя Elastic Beanstack создает автоматически , можно поменять (prod, staged)
-  DEPLOY_PACKAGE_NAME       : "flask_app_${{ github.sha }}".zip  # Это файл который будет использоваться. ${{ github.sha }} - Это hash коммита
+  DEPLOY_PACKAGE_NAME       : "flask_app_${{ github.sha }}.zip"  # Это файл который будет использоваться. ${{ github.sha }} - Это hash коммита
   AWS_REGION_NAME           : "us-west-2"
 
 on:
