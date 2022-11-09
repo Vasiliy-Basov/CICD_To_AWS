@@ -1,8 +1,8 @@
 name: CI-CD-Pipeline-to-AWS-ElasticBeastalk  # В будущем этот скрипт можно поменятьна любой application и использовать для deploy любого application.
 env:  #Назначаем глобальные переменные которые нам понадобяться
   EB_PACKAGE_S3_BUCKET_NAME : "vasya-flask-application-packages" # Это имя S3 Bucket где будут храниться все наши пакеты 
-  EB_APPLICATION_NAME       : "MyFlask"      # Это имя Elastic Beanstack которыймы сделали
-  EB_EVIRONMENT_NAME        : "Myflask-env"  # Это имя Elastic Beanstack создает автоматически , можно поменять (prod, staged)
+  EB_APPLICATION_NAME       : "MyFlask"      # Это имя Elastic Beanstalk который мы сделали
+  EB_ENVIRONMENT_NAME        : "Myflask-env"  # Это имя Elastic Beanstalk создает автоматически , можно поменять (prod, staged)
   DEPLOY_PACKAGE_NAME       : "flask_app_${{ github.sha }}.zip"  # Это файл который будет использоваться. ${{ github.sha }} - Это hash коммита
   AWS_REGION_NAME           : "us-west-2"
 
@@ -34,3 +34,42 @@ jobs:
       
     - name: Print Happy Message for CI finish
       run : echo "CI Pipeline part finished successfully"
+
+  my_cd_part:
+    runs-on: ubuntu-latest
+    needs: [my_ci_part] # Этот скрипт должен запускаться только после того как запустился предыдущий
+    
+    steps:
+    - name: Configure my AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-acces-key-id     : ${{ secrets.MY_AWS_ACCESS_KEY }} # Посылаем в наш скрипт configure-aws-credentials@v1 наш секретный ключ из хранилища Github Secrets
+        aws-secret-access-key: ${{ secrets.MY_AWS_SECRET_KEY }} # Посылаем SECRET key
+        aws-region           : ${{ env.AWS_REGION_NAME }}       # Засылаем наш регион
+    
+    - name: Create new ElasticBeanstalk # Создаем новую версию ElasticBeanstalk Application из нашего пакета который мы положили в S3 Bucket
+      run : |  # | означаеи multiline в несколько строк можем команду записывать
+        aws elasticbeanstalk create-application-version \ # \ - означает что мы можем ту же строку продолжать на следующей строке
+        --application-name ${{ EB_APPLICATION_NAME }} \  # Передаем наши параметры, это имя Elastic Beanstalk
+        --source-bundle S3Bucket="${{ env.EB_PACKAGE_S3_BUCKET_NAME }}",S3Key="${{ env.DEPLOY_PACKAGE_NAME }}" \ # Откуда брать наш файл. S3Bucket это название S3 Bucket, S3Key это название файла т.е. наш deployment package который мы залили на s3 bucket
+        --version-label "Ver-${{ github.sha }} \ # Какая версия будет у нашего пакета. Обязательно должна быть уникальная версия для каждого пакета. Нельзя сделать две версии одинаковыми
+        --description "CommitSHA-${{ github.sha }}"
+        
+    - name: Deploy new ElasticBeanstalk Application Version  # Теперь когда application сделан нам нужно его развернуть (deploy)
+      run: aws elasticbeanstalk update-enviroment --enviroment-name ${{ env.EB_ENVIRONMENT_NAME }} --version-label "Ver-${{ github.sha }}"
+      
+    - name: Print Happy Message for CD finish
+      run : echo "CD Pipeline part finished successfully"      
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
